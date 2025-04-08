@@ -2,18 +2,18 @@ const departmentService = require("../services/departmentService")
 
 exports.getListDepartment = async (req, res) =>{
     try {
-        const { page, limit, search, order } = req.body;
-        const result = await departmentService.getListDepartment(page, limit, search, order);
+        const {search, order } = req.body;
+        const result = await departmentService.getListDepartment(search, order)
         if(result.success){
             return res.status(200).json({
                 status_code: 200,
                 message: result.message,
                 data: result.list_department,
-                pagination: result.pagination
+                total: result.total
             });
         }
         else{
-            return res.status(400).json({
+            return res.status(200).json({
                 status_code: 400,
                 message: result.message
             });
@@ -21,7 +21,7 @@ exports.getListDepartment = async (req, res) =>{
 
     } catch (error) {
         console.error("Error fetching department list:", error);
-        return res.status(500).json({
+        return res.status(200).json({
             status_code: 500,
             message: "Internal server error"
         });

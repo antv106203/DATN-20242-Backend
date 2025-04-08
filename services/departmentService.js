@@ -1,12 +1,12 @@
 const Department = require("../models/department.model");
 const mongoose = require("mongoose");
 
-exports.getListDepartment = async (page = 1, limit = 10, search = "", order = "asc") =>{
+exports.getListDepartment = async (search = "", order = "asc", floor = null) =>{
     try {
         // Chuyển đổi dữ liệu
-        page = parseInt(page) || 1;
-        limit = parseInt(limit) || 10;
-        const skip = (page - 1) * limit;
+        // page = parseInt(page) || 1;
+        // limit = parseInt(limit) || 10;
+        // const skip = (page - 1) * limit;
 
         // Bộ lọc tìm kiếm theo tên hoặc mã
         let filter = {};
@@ -19,14 +19,16 @@ exports.getListDepartment = async (page = 1, limit = 10, search = "", order = "a
             };
         }
 
+        if (floor !== null) {
+            filter.floor = floor;
+        }
+
         // Xử lý sắp xếp theo `department_name`
         const sortOrder = order === "asc" ? 1 : -1;
         let sortOptions = { department_name: sortOrder };
 
         // Lấy danh sách phòng ban
         const departments = await Department.find(filter)
-            .skip(skip)
-            .limit(limit)
             .sort(sortOptions);
 
         // Đếm tổng số bản ghi thỏa mãn điều kiện
@@ -36,12 +38,7 @@ exports.getListDepartment = async (page = 1, limit = 10, search = "", order = "a
             success: true,
             message: "Department list fetched successfully",
             list_department: departments,
-            pagination: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit)
-            },
+            total: departments.length,
             sort: { sortBy: "department_name", order }
         };
     } catch (error) {

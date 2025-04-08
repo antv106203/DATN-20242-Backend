@@ -33,6 +33,10 @@ const DepartmentSchema = new mongoose.Schema({
         type: String,
         enum: ["ACTIVE", "INACTIVE"],
         default: "ACTIVE"
+    },
+    floor : {
+        type: String,
+        required: [true, "Floor is required"],
     }
 
 }, {timestamps: true})
