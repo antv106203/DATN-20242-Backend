@@ -81,17 +81,14 @@ exports.deleteUserFromList = async (_id) => {
     }
 };
 
-exports.getListUser = async(id_department = null, page = 1 , limit = 10, search = "", order = "asc", status = null) =>{
+exports.getListUser = async(id_department = null, page = 1 , limit = 10, full_name = "", user_code = "", order = "asc", status = null) => {
     try {
-
-        // Chuyển đổi dữ liệu
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Bộ lọc tìm kiếm theo tên hoặc mã
         let filter = {};
-        
+
         if (id_department) {
             filter.department_id = id_department;
         }
@@ -100,25 +97,26 @@ exports.getListUser = async(id_department = null, page = 1 , limit = 10, search 
             filter.status = status;
         }
 
-        if (search) {
-            filter = {
-                $or: [
-                    { full_name: { $regex: search, $options: "i" } },
-                    { user_code: { $regex: search, $options: "i" } }
-                ]
-            };
+        // Nếu truyền full_name hoặc user_code thì thêm điều kiện regex
+        if (full_name) {
+            filter.full_name = { $regex: full_name, $options: "i" };
         }
 
-        // Xử lý sắp xếp theo `full_name`
+        if (user_code) {
+            filter.user_code = { $regex: user_code, $options: "i" };
+        }
+
         const sortOrder = order === "asc" ? 1 : -1;
-        let sortOptions = { full_name: sortOrder };
+        const sortOptions = { full_name: sortOrder };
 
         const users = await User.find(filter)
+            .populate("department_id")
             .skip(skip)
             .limit(limit)
-            .sort(sortOptions)
+            .sort(sortOptions);
 
         const total = await User.countDocuments(filter);
+        const returned = users.length; // số bản ghi trả về ở trang hiện tại
 
         return {
             success: true,
@@ -128,11 +126,12 @@ exports.getListUser = async(id_department = null, page = 1 , limit = 10, search 
                 total,
                 page,
                 limit,
-                totalPages: Math.ceil(total / limit)
+                totalPages: Math.ceil(total / limit),
+                returned: returned
             }
         };
     } catch (error) {
-        return { success: false, message: `Failed to fetch user list: ${error}`};
+        return { success: false, message: `Failed to fetch user list: ${error}` };
     }
 }
 

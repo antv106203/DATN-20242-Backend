@@ -2,8 +2,8 @@ const departmentService = require("../services/departmentService")
 
 exports.getListDepartment = async (req, res) =>{
     try {
-        const {search, order } = req.body;
-        const result = await departmentService.getListDepartment(search, order)
+        const {search, order, floor } = req.body;
+        const result = await departmentService.getListDepartment(search, order, floor)
         if(result.success){
             return res.status(200).json({
                 status_code: 200,

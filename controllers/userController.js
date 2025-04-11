@@ -78,9 +78,9 @@ exports.deleteUserFromList = async (req, res) =>{
 
 exports.getListUser = async (req, res) =>{
     try {
-        const {id_department, page, limit, search, order, status} = req.body;
+        const {id_department, page, limit, user_code, full_name, order, status} = req.body;
 
-        const result = await userService.getListUser(id_department, page, limit, search, order, status);
+        const result = await userService.getListUser(id_department,page, limit,full_name, user_code, order, status);
         if(result.success){
             return res.status(200).json({
                 status_code: 200,
