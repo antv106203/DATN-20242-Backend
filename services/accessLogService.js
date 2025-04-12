@@ -24,7 +24,7 @@ exports.getListAccessLog = async(page, limit, order = "asc", user_id = null, res
         const accessLogs = await AccessLog.find(filter)
                     .populate({
                         path: "user_id", 
-                        select: "full_name user_code" ,
+                        select: "full_name user_code avatar" ,
                         populate: {
                             path: "department_id",
                             select: "department_name department_code"

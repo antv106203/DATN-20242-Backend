@@ -15,13 +15,13 @@ exports.getListAccessLog = async (req, res) =>{
             })
         }
         else{
-            return res.status(400).json({
+            return res.status(200).json({
                 status_code: 400,
                 message: resultAccess.message
             })
         }
     } catch (error) {
-        return res.status(500).json({
+        return res.status(200).json({
             status_code: 500,
             message: `Internal server error ${error}`
         });
@@ -41,13 +41,13 @@ exports.createAccessLog = async (req, res) =>{
             })
         }
         else{
-            return res.status(400).json({
+            return res.status(200).json({
                 status_code: 400,
                 message: rs.message
             })
         }
     } catch (error) {
-        return res.status(500).json({
+        return res.status(200).json({
             status_code: 500,
             message: `Internal server error ${error}`
         });

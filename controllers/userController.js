@@ -3,7 +3,8 @@ const userService = require("../services/userService")
 exports.createNewUser = async (req, res) => {
     try {
         const user = req.body;
-        const result = await userService.createNewuser(user);
+        const avatar = req.file ? req.fileURL : "";
+        const result = await userService.createNewuser(user, avatar);
 
         if(result.success){
             return res.status(201).json({

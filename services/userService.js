@@ -1,10 +1,10 @@
 const Department = require("../models/department.model");
 const User = require("../models/user.model");
 
-exports.createNewuser = async (newUser) =>{
+exports.createNewuser = async (newUser, avatar) =>{
     try {
 
-        const { full_name, email, department_id, phone_number, date_of_birth, user_code, avatar, sex } = newUser;
+        const { full_name, email, department_id, phone_number, date_of_birth, user_code, sex } = newUser;
 
         if (!full_name || !email || !department_id || !user_code) {
             return { success: false, message: "Full name, email, and user_code are required", data: null };
@@ -28,7 +28,7 @@ exports.createNewuser = async (newUser) =>{
             user_code,
             phone_number: phone_number || undefined,
             date_of_birth: date_of_birth || undefined,
-            avatar : avatar || undefined,
+            avatar: avatar ?? "",
             sex: sex || undefined
         })
 
