@@ -16,8 +16,7 @@ const AccessLogSchema = mongoose.Schema({
     },
     result: {
         type: String,
-        enum: ["SUCCESS", "FAILURE"],
-        required: true
+        enum: ["SUCCESS", "FAILURE"]
     }
 });
 

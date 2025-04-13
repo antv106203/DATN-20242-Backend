@@ -1,41 +1,59 @@
 const AccessLog = require("../models/accessLog.model");
 const Fingerprint = require("../models/fingerprint.model")
-
-exports.getListAccessLog = async(page, limit, order = "asc", user_id = null, result) =>{
+const User = require("../models/user.model")
+exports.getListAccessLog = async (page, limit, order = "asc", department_id = null, result, fromDate = null, toDate = null) => {
     try {
         // Chuyển đổi dữ liệu
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 10;
         const skip = (page - 1) * limit;
 
-        let filter = {};
-
-        if(user_id) {
-            filter.user_id = user_id
-        }
-
-        if(result){
-            filter.result = result
-        }
-
         const sortOrder = order === "asc" ? 1 : -1;
         let sortOptions = { access_time: sortOrder };
 
+        let filter = {};
+
+        // Lọc theo trạng thái kết quả (SUCCESS/FAILURE)
+        if (result) {
+            filter.result = result;
+        }
+
+        // Lọc theo khoảng thời gian
+        if (fromDate || toDate) {
+            filter.access_time = {};
+            if (fromDate) {
+                filter.access_time.$gte = new Date(fromDate); // từ ngày
+            }
+            if (toDate) {
+                // toDate đến cuối ngày (23:59:59.999)
+                const toDateObj = new Date(toDate);
+                toDateObj.setHours(23, 59, 59, 999);
+                filter.access_time.$lte = toDateObj; // đến ngày
+            }
+        }
+
+        // Lọc theo phòng ban
+        if (department_id) {
+            const users = await User.find({ department_id }, "_id");
+            const userIds = users.map(u => u._id);
+            filter.user_id = { $in: userIds };
+        }
+
         const accessLogs = await AccessLog.find(filter)
-                    .populate({
-                        path: "user_id", 
-                        select: "full_name user_code avatar" ,
-                        populate: {
-                            path: "department_id",
-                            select: "department_name department_code"
-                        }
-                    })
-                    .skip(skip)
-                    .limit(limit)
-                    .sort(sortOptions)
-        
+            .populate({
+                path: "user_id",
+                select: "full_name user_code avatar",
+                populate: {
+                    path: "department_id",
+                    select: "department_name department_code"
+                }
+            })
+            .skip(skip)
+            .limit(limit)
+            .sort(sortOptions);
+
         const total = await AccessLog.countDocuments(filter);
-        
+
         return {
             success: true,
             message: "AccessLogs list fetched successfully",
@@ -48,9 +66,12 @@ exports.getListAccessLog = async(page, limit, order = "asc", user_id = null, res
             }
         };
     } catch (error) {
-        return { success: false, message: `Failed to fetch accessLogs list: ${error}`};
+        return {
+            success: false,
+            message: `Failed to fetch accessLogs list: ${error}`
+        };
     }
-}
+};
 
 exports.createAcessLog = async (fingerprint_id, device_id, result) =>{
     try {

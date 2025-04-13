@@ -31,6 +31,7 @@ exports.getListDepartment = async (req, res) =>{
 exports.createNewDepartment = async (req, res) =>{
     try {
         const department = req.body;
+        console.log(department)
         const result = await departmentService.createNewDepartment(department);
         if(result.success){
             return res.status(201).json({
@@ -40,13 +41,13 @@ exports.createNewDepartment = async (req, res) =>{
             })
         }
         else{
-            return res.status(400).json({
+            return res.status(200).json({
                 status_code: 400,
                 message: result.message,
             })
         }
     } catch (error) {
-        return res.status(500).json({
+        return res.status(200).json({
             status_code: 500,
             message: error,
         })
@@ -93,13 +94,13 @@ exports.updateDepartment = async (req, res) => {
             })
         }
         else{
-            return res.status(400).json({
+            return res.status(200).json({
                 status_code: 400,
                 message: result.message
             })
         }
     } catch (error) {
-        return res.status(500).json({
+        return res.status(200).json({
             status_code: 500,
             message: `Internal server error: ${error}`
         })

@@ -50,16 +50,16 @@ exports.getListDepartment = async (search = "", order = "asc", floor = null) =>{
 
 exports.createNewDepartment = async (department) => {
     try {
-        const { department_name, department_code } = department;
-        if (!department_name || !department_code) {
-            return { success: false, message: "Department name and code are required", data: null };
+        const { department_name, department_code, floor } = department;
+        if (!department_name || !department_code || !floor) {
+            return { success: false, message: "Department name, code, floor are required", data: null };
         }
         const existingDepartment = await Department.findOne({ department_code });
         if (existingDepartment) {
             return { success: false, message: "Department code already exists", data: null };
         }
         // Tạo phòng ban mới
-        const newDepartment = new Department({ department_name, department_code });
+        const newDepartment = new Department({ department_name, department_code, floor });
         await newDepartment.save();
         return { success: true, message: "Department created successfully", data: newDepartment };
     } catch (error) {

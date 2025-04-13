@@ -2,9 +2,9 @@ const accessLogService = require("../services/accessLogService")
 
 exports.getListAccessLog = async (req, res) =>{
     try {
-        const {page, limit, order , user_id , result} = req.body;
+        const {page, limit, order , department_id , result, fromDate, toDate} = req.body;
 
-        const resultAccess = await accessLogService.getListAccessLog(page, limit, order, user_id, result);
+        const resultAccess = await accessLogService.getListAccessLog(page, limit, order, department_id, result, fromDate, toDate);
 
         if(resultAccess.success){
             return res.status(200).json({
