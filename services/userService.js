@@ -1,23 +1,29 @@
 const Department = require("../models/department.model");
 const User = require("../models/user.model");
+const { validateUserInput } = require("../utils/UserUtils");
 
 exports.createNewuser = async (newUser, avatar) =>{
     try {
-
         const { full_name, email, department_id, phone_number, date_of_birth, user_code, sex } = newUser;
 
-        if (!full_name || !email || !department_id || !user_code) {
-            return { success: false, message: "Full name, email, and user_code are required", data: null };
+        // Kiểm tra các trường bắt buộc
+        const isvalid = validateUserInput(newUser);
+        if (!isvalid.success) {
+            return { success: false, message: isvalid.message, data: null };
         }
+
+        // if (!full_name || !email || !department_id || !user_code) {
+        //     return { success: false, message: "Full name, email, and user_code are required", data: null };
+        // }
 
 
         const existingUser = await User.findOne({ user_code });
         if (existingUser) {
             if(existingUser.status === "DELETED"){
-                return { success: false, message: "User in deleted list"};
+                return { success: false, message: "Người dùng đang trong danh sách đã xóa gần đây", data: null };
             }
             else {
-                return { success: false, message: "User already exists"};
+                return { success: false, message: "Người dùng đã tồn tại", data: null };
             }
         }
 
@@ -36,7 +42,7 @@ exports.createNewuser = async (newUser, avatar) =>{
 
         await Department.findByIdAndUpdate(department_id, { $inc: { total_member: 1 } });
 
-        return { success: true, message: "User created successfully", data: newUserData};
+        return { success: true, message: "Tạo người dùng mới thành công", data: newUserData};
 
     } catch (error) {
         return { success: false, message: `Internal server error: ${error}`, data: null };
@@ -48,7 +54,7 @@ exports.deleteUserPre = async(_id) =>{
         const user_existing = await User.findById(_id);
 
         if(!user_existing){
-            return {success: false, message: "User not found"}
+            return {success: false, message: "Không tìm thấy người dùng"}
         }
 
         else{
@@ -56,7 +62,7 @@ exports.deleteUserPre = async(_id) =>{
             if (user_existing.department_id) {
                 await Department.findByIdAndUpdate(user_existing.department_id, { $inc: { total_member: -1 } });
             }
-            return {success: true, message: "User deleted successfully"}
+            return {success: true, message: "Xóa người dùng thành công, người dùng đã được chuyển vào danh sách đã xóa gần đây"}
         }
     } catch (error) {
         return { success: false, message: `Internal server error: ${error}`};
@@ -69,13 +75,13 @@ exports.deleteUserFromList = async (_id) => {
         const user_existing = await User.findById(_id);
 
         if (!user_existing) {
-            return { success: false, message: "User not found" };
+            return { success: false, message: "Không tìm thấy người dùng" };
         }
 
         // Xóa user vĩnh viễn khỏi database
         await User.findByIdAndDelete(_id);
 
-        return { success: true, message: "User permanently deleted" };
+        return { success: true, message: "Xóa người dùng thành công" };
     } catch (error) {
         return { success: false, message: `Internal server error: ${error}` };
     }
@@ -107,7 +113,7 @@ exports.getListUser = async(id_department = null, page = 1 , limit = 10, full_na
         }
 
         const sortOrder = order === "asc" ? 1 : -1;
-        const sortOptions = { full_name: sortOrder };
+        const sortOptions = { createdAt: sortOrder };
 
         const users = await User.find(filter)
             .populate("department_id")
@@ -120,7 +126,7 @@ exports.getListUser = async(id_department = null, page = 1 , limit = 10, full_na
 
         return {
             success: true,
-            message: "User list fetched successfully",
+            message: "Lấy danh sách người dùng thành công",
             list_user: users,
             pagination: {
                 total,
@@ -131,7 +137,7 @@ exports.getListUser = async(id_department = null, page = 1 , limit = 10, full_na
             }
         };
     } catch (error) {
-        return { success: false, message: `Failed to fetch user list: ${error}` };
+        return { success: false, message: `Lỗi khi lấy danh sách người dùng: ${error}` };
     }
 }
 

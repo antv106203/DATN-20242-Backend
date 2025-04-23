@@ -7,33 +7,33 @@ exports.loginAccount = async(email, password) =>{
         // Kiểm tra định dạng email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return { success: false, message: "Invalid email format"};
+            return { success: false, message: "Không đúng định dạng email" };
         }
 
         // Kiểm tra xem email có tồn tại không
         const account = await Account.findOne({email})
         if (!account) {
-            return { success: false, message: "Email does not exist"};
+            return { success: false, message: "Email không tồn tại" };
         }
 
         // Kiểm tra mật khẩu
         const passwordCheck = await bcrypt.compare(password, account.password);
         if (!passwordCheck) {
-            return { success: false, message: "Wrong password"};
+            return { success: false, message: "Mật khẩu không đúng" };
         };
         
 
         const token = jwt.sign(
-            {Email: account.email },
+            {Email: account.email, role: account.role},
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
 
         // Trả về user và token
-        return { success: true, message: "Login successful", data : {account: account, token: token}};
+        return { success: true, message: "Đăng nhập thành công", data : {account: account, token: token}};
     }   
     catch (error) {
-        return { success: false, message: `Failed to login: ${error}` };
+        return { success: false, message: `Lỗi khi đăng nhập: ${error}` };
     }
 }
 
@@ -43,7 +43,7 @@ exports.registerAccount = async (email, password, role) => {
         // Kiểm tra định dạng email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return { success: false, message: "Invalid email format" };
+            return { success: false, message: "Không đúng định dạng email" };
             // throw new Error("Invalid email format");
         }
 
@@ -51,14 +51,15 @@ exports.registerAccount = async (email, password, role) => {
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         if (!passwordRegex.test(password)) {
             // throw new Error("Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character");
-            return { success: false, message: "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character" };
+            // return { success: false, message: "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character" };
+            return { success: false, message: "Mật khẩu phải dài ít nhất 8 ký tự, chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt" };
         }
 
         // Kiểm tra email đã tồn tại chưa
         const existingAccount = await Account.findOne({ email });
         if (existingAccount) {
             // throw new Error("Email already exists");
-            return { success: false, message: "Email already exists" };
+            return { success: false, message: "Email đã tồn tại" };
         }
 
         // Mã hóa mật khẩu trước khi lưu vào database
@@ -81,9 +82,11 @@ exports.registerAccount = async (email, password, role) => {
             { expiresIn: "7d" }
         );
 
-        return { success: true, message: "Account registered successfully", data: {account: newAccount, token: token }};
+        return { success: true, message: "Đăng ký tài khoản thành công", data: {account: newAccount, token: token }};
     }
     catch(error){
-        return { success: false, message: `Failed to register account: ${error}` };
+        return { success: false, message: `Lỗi khi đăng ký tài khoản: ${error}` };
     }
 };
+
+

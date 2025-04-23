@@ -52,16 +52,16 @@ exports.createNewDepartment = async (department) => {
     try {
         const { department_name, department_code, floor } = department;
         if (!department_name || !department_code || !floor) {
-            return { success: false, message: "Department name, code, floor are required", data: null };
+            return { success: false, message: "Tên phòng, Mã phòng, Tầng không được để trống", data: null };
         }
         const existingDepartment = await Department.findOne({ department_code });
         if (existingDepartment) {
-            return { success: false, message: "Department code already exists", data: null };
+            return { success: false, message: "Phòng đã tồn tại", data: null };
         }
         // Tạo phòng ban mới
         const newDepartment = new Department({ department_name, department_code, floor });
         await newDepartment.save();
-        return { success: true, message: "Department created successfully", data: newDepartment };
+        return { success: true, message: "Tạo phòng mới thành công", data: newDepartment };
     } catch (error) {
         return { success: false, message: `Internal server error : ${error}`, data: null };
     }
@@ -73,54 +73,78 @@ exports.getDetailDepartment = async (_id) =>{
         if (!department) {
             return { 
                 success: false, 
-                message: "Department not found"
+                message: "Không tim thấy phòng ban"
             };
         }
         else{
             return { 
                 success: true, 
-                message: "Department details fetched successfully", 
+                message: "Lấy thông tin phòng ban thành công", 
                 data: department 
             };
         }
     } catch (error) {
         return { 
             success: false, 
-            message: `Failed to fetch department details: ${error}`
+            message: `Lỗi khi lấy thông tin phòng ban: ${error}`
         };
     }
 }
 
-exports.updateDepartment = async (department_id_mongodb ,data_input) => {
+exports.updateDepartment = async (department_id_mongodb, data_input) => {
     try {
         // Lấy dữ liệu phòng ban hiện tại
         const existingDepartment = await Department.findById(department_id_mongodb);
         if (!existingDepartment) {
             return { 
                 success: false, 
-                message: "Department not found" 
+                message: "Không tìm thấy phòng ban" 
             };
         }
 
-        // Kiểm tra và giữ nguyên giá trị cũ nếu giá trị mới không hợp lệ
-        const updateData = {
-            department_name: data_input.department_name !== null && data_input.department_name !== undefined
-                ? data_input.department_name.trim()
-                : existingDepartment.department_name, // Giữ nguyên nếu giá trị mới là null
+        // Lấy dữ liệu đầu vào và trim
+        const trimmedName = data_input.department_name?.trim();
+        const trimmedCode = data_input.department_code?.trim();
+        const trimmedFloor = data_input.floor?.trim();
 
-            department_code: data_input.department_code !== null && data_input.department_code !== undefined
-                ? data_input.department_code.trim()
-                : existingDepartment.department_code // Giữ nguyên nếu giá trị mới là null
+        // Kiểm tra nếu có giá trị nào rỗng
+        if (trimmedName === "") {
+            return {
+                success: false,
+                message: "Tên phòng ban không được để trống"
+            };
+        }
+
+        if (trimmedCode === "") {
+            return {
+                success: false,
+                message: "Mã phòng ban không được để trống"
+            };
+        }
+
+        if (trimmedFloor === "") {
+            return {
+                success: false,
+                message: "Tầng không được để trống"
+            };
+        }
+
+        // Nếu không có lỗi, tiến hành so sánh với dữ liệu cũ
+        const updateData = {
+            department_name: trimmedName ?? existingDepartment.department_name,
+            department_code: trimmedCode ?? existingDepartment.department_code,
+            floor: trimmedFloor ?? existingDepartment.floor
         };
 
-        // Kiểm tra nếu cả hai giá trị đều không thay đổi
+        // Kiểm tra nếu không có gì thay đổi
         if (
             updateData.department_name === existingDepartment.department_name &&
-            updateData.department_code === existingDepartment.department_code
+            updateData.department_code === existingDepartment.department_code &&
+            updateData.floor === existingDepartment.floor
         ) {
             return { 
                 success: false, 
-                message: "No changes detected"
+                message: "Không có thay đổi nào được phát hiện"
             };
         }
 
@@ -133,13 +157,14 @@ exports.updateDepartment = async (department_id_mongodb ,data_input) => {
 
         return { 
             success: true, 
-            message: "Department updated successfully", 
+            message: "Cập nhật phòng ban thành công", 
             data: updatedDepartment 
         };
+
     } catch (error) {
         return { 
             success: false, 
-            message: `Failed to update department: ${error}`
+            message: `Lỗi khi cập nhật phòng ban: ${error}`
         };
     }
-}
+};
