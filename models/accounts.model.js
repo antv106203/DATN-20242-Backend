@@ -21,8 +21,22 @@ const AccountSchema = new mongoose.Schema({
         type: String,
         required: true,
         enum: ["ADMIN", "GAURD"],
+    },
+    otp: { 
+        type: String 
+    },  // OTP
+    
+    otpExpiration: { 
+        type: Date 
+    },  // Thời gian hết hạn OTP
+
+    status: {
+        type: String,
+        enum: ["ACTIVE", "INACTIVE"],
+        default: "ACTIVE",
     }
-});
+    
+}, {timestamps: true});
 
 const Account = mongoose.models.Account || mongoose.model("Account", AccountSchema);
 module.exports = Account;

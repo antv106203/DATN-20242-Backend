@@ -10,7 +10,6 @@ module.exports = (allowedRoles) => {
 
             //check if the token matches the supposed origin
             const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-            console.log("decodedToken: ", decodedToken);
 
             // retrieve the user details of the logged in user
             const user = decodedToken;
