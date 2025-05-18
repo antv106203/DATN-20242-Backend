@@ -9,11 +9,32 @@ const fingerprintRoutes = require("./routes/fingerprintRoutes");
 const accessLogRoutes = require("./routes/accessLogRoutes");
 const dbConnect = require('./config/dbConnect');
 const { startExpiredCheck } = require('./services/fingerprintService');
+const client = require('./config/mqttConnect');
+const { createAcessLog } = require('./services/accessLogService');
 
 const app = express();
 
 // Kết nối đến database
 dbConnect();
+
+client.on("message", async (topic, message) => {
+    console.log("MQTT received topic:", topic.toString());
+    try {
+        if(topic.toString() === "/fingerprint"){
+          const jsonMessage = JSON.parse(message.toString());
+          const res = await createAcessLog(jsonMessage.fingerprint_id, jsonMessage.mac_address, jsonMessage.result);
+          if(res.success){
+              console.log("AccessLog created successfully:", res.accessLog);
+          }
+          else {
+              console.log("Error creating AccessLog:", res.message);
+          }
+        }
+    } catch (error) {
+        console.log("Message (Raw):", message.toString());
+        console.error("Error parsing message as JSON:", error);
+    }
+});
 
 // Middleware
 app.use(express.json());

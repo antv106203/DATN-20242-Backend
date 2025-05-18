@@ -1,35 +1,65 @@
 const { set } = require("mongoose");
 const Fingerprint = require("../models/fingerprint.model")
+const mqttClient = require("../config/mqttConnect");
+const Device = require("../models/device.model");
 
-exports.createFingerprint = async (fingerprint) =>{
+
+const normalizeFingerprintName = (name) => {
+    return name.trim().replace(/\s+/g, ' ').toLowerCase();
+};
+
+exports.createFingerprint = async (fingerprint_id, fingerprint_name, expiry_at, user_id, device_id) => {
     try {
-        const {fingerprint_id, fingerprint_name, expiry_at, user_id, device_id} = fingerprint;
-
-        if(!fingerprint_id || !fingerprint_name || !expiry_at || !user_id || !device_id ){
-            return { success: false, message: "fingerprint_id, fingerprint_name, expiry_at, user_id and device_id are required" };
+        if (!fingerprint_id || !fingerprint_name || !expiry_at || !user_id || !device_id) {
+            return { success: false, message: "Không được bỏ trống thông tin" };
         }
 
-        const existingFingerprint = await Fingerprint.findOne({fingerprint_id, device_id})
+        // Kiểm tra trùng fingerprint_id trong cùng device
+        const existingFingerprint = await Fingerprint.findOne({ fingerprint_id, device_id });
+        if (existingFingerprint) {
+            return { success: false, message: "ID vân tay đã tồn tại trong thiết bị" };
+        }
 
-        if(existingFingerprint){
-            return { success: false, message: "Fingerprint already exists" };
+        // Chuẩn hóa tên vân tay để kiểm tra trùng tên
+        const normalizedName = normalizeFingerprintName(fingerprint_name);
+
+        const existingByName = await Fingerprint.findOne({
+            user_id,
+            $expr: {
+                $eq: [
+                    { $toLower: { $trim: { input: "$fingerprint_name" } } },
+                    normalizedName
+                ]
+            }
+        });
+
+        if (existingByName) {
+            return { success: false, message: "Tên vân tay đã tồn tại cho nhân viên này" };
         }
 
         const newFingerprint = new Fingerprint({
             fingerprint_id,
-            fingerprint_name,
+            fingerprint_name: fingerprint_name.trim().replace(/\s+/g, ' '),
             expiry_at,
             user_id,
-            device_id
-        })
+            device_id,
+            status: "ACTIVE"
+        });
 
         await newFingerprint.save();
-        
-        return { success: true, message: "Fingerprint created successfully", data: newFingerprint};
+
+        return {
+            success: true,
+            message: "Thêm mới dấu vân tay thành công",
+            data: newFingerprint
+        };
     } catch (error) {
-        return { success: false, message: `Internal server error: ${error}`};
+        return {
+            success: false,
+            message: `Lỗi server: ${error}`
+        };
     }
-}
+};
 
 exports.getListFingerprint = async(page, limit, search,  order = "asc", status = null, user_id = null, device_id = null) =>{
     try {
@@ -159,7 +189,8 @@ exports.startExpiredCheck = () =>{
     }, 120000); // Kiểm tra mỗi 2 phút
 }
 
-// exports.getDetailFingerprin
+
+
 
 
 

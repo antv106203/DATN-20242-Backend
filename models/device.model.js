@@ -3,8 +3,7 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const DeviceSchema = new mongoose.Schema({
     device_id: {
-        type: Number,
-        required: true
+        type: Number
     },
     device_name: {
         type: String,

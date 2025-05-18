@@ -24,6 +24,10 @@ exports.loginAccount = async(email, password) =>{
         if (!passwordCheck) {
             return { success: false, message: "Mật khẩu không đúng" };
         };
+
+        if(account.status === "INACTIVE"){
+            return { success: false, message: "Tài khoản đã bị khóa. Hãy liên hệ ADMIN để được mở khóa" };
+        }
         
 
         const token = jwt.sign(

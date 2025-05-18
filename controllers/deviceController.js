@@ -28,8 +28,8 @@ exports.getListDevice = async (req, res) =>{
 
 exports.createNewDevice = async(req, res) =>{
     try {
-        const device = req.body;
-        const result = await deviceService.createNewDevice(device);
+        const {device_name, mac_address, department_id} = req.body;
+        const result = await deviceService.createNewDevice(device_name, mac_address, department_id);
         if(result.success){
             return res.status(201).json({
                 status_code: 201,
@@ -38,13 +38,13 @@ exports.createNewDevice = async(req, res) =>{
             });
         }
         else{
-            return res.status(400).json({
+            return res.status(201).json({
                 status_code: 400,
                 message: result.message,
             });
         }
     } catch (error) {
-        return res.status(500).json({
+        return res.status(201).json({
             status_code: 500,
             message: error,
         });
@@ -76,3 +76,28 @@ exports.updateDevice = async(req, res) =>{
         });    
     }
 }
+
+
+exports.getUnregisteredDevices = async (req, res) => {
+    try {
+        const result = await deviceService.findAvailableDevices();
+        if (!result.success) {
+            return res.status(200).json({
+                status_code: 400,
+                message: result.message,
+            });
+        }
+        else {
+            return res.status(200).json({
+                status_code: 200,
+                message: result.message,
+                data: result.new_devices
+            });
+        }
+    } catch (error) {
+        return res.status(200).json({
+            status_code: 500,
+            message: error
+        });
+    }
+};

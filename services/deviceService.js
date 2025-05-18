@@ -1,24 +1,54 @@
 const Device = require("../models/device.model");
+let foundMACs = new Set();
+const mqttClient = require("../config/mqttConnect");
 
-exports.createNewDevice = async(device) =>{
+exports.createNewDevice = async (device_name, mac_address, department_id) => {
     try {
-        const {device_name, mac_address, department_id} = device;
-        if(!device_name || !mac_address || !department_id){
-            return {success: false, message: "Device name and Mac address and Deparrment ID are required", data: null}
-        }
-        const existingDevice = await Device.findOne({mac_address});
-        if (existingDevice) {
-            return { success: false, message: "Device already exists", data: null };
+        if (!device_name || !mac_address || !department_id) {
+            return {
+                success: false,
+                message: "Chưa điền đủ thông tin",
+                data: null,
+            };
         }
 
-        // Thêm thiết bị mới
-        const newDevice = new Device({device_name, mac_address, department_id})
+        const existingDevice = await Device.findOne({ mac_address });
+        if (existingDevice) {
+            return {
+                success: false,
+                message: "Thiết bị đã tồn tại",
+                data: null,
+            };
+        }
+
+        // ❗ Kiểm tra phòng ban đã được kết nối thiết bị nào chưa
+        const departmentUsed = await Device.findOne({ department_id });
+        if (departmentUsed) {
+            return {
+                success: false,
+                message: "Phòng này đã được kết nối với thiết bị khác",
+                data: null,
+            };
+        }
+
+        // ✅ Tạo thiết bị mới
+        const newDevice = new Device({ device_name, mac_address, department_id });
         await newDevice.save();
-        return { success: true, message: "Device created successfully", data: newDevice };
+
+        return {
+            success: true,
+            message: "Thiết bị đã được tạo thành công",
+            data: newDevice,
+        };
     } catch (error) {
-        return { success: false, message: `Internal server error : ${error}`, data: null };
+        return {
+            success: false,
+            message: `Lỗi máy chủ nội bộ: ${error.message}`,
+            data: null,
+        };
     }
-}
+};
+
 
 exports.getListDevice = async(page = 1, limit = 10, search = "", order = "asc", department_id = null) =>{
     try {
@@ -120,3 +150,50 @@ exports.updateDevice = async(_id , update_device) =>{
         };
     }
 }
+
+// Thu thập MAC từ ESP phản hồi
+mqttClient.on("message", (topic, message) => {
+    if (topic === "/findDevice/response") {
+        const mac = message.toString().trim().toLowerCase();
+        if (mac) foundMACs.add(mac);
+    }
+});
+
+exports.findAvailableDevices = async () => {
+    try {
+        foundMACs.clear();
+
+        // Gửi tin nhắn đến tất cả các ESP
+        mqttClient.publish("/findDevice", JSON.stringify({ ping: true }));
+
+        // Đợi phản hồi trong 5 giây
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
+        // Lấy danh sách thiết bị đã tồn tại
+        const existingDevices = await Device.find({}, "mac_address");
+        const existingMACs = new Set(
+            existingDevices.map(d => d.mac_address.trim().toUpperCase())
+        );
+
+        // Chuẩn hóa MAC nhận từ ESP thành viết hoa
+        const normalizedFoundMACs = Array.from(foundMACs).map(mac =>
+            mac.trim().toUpperCase()
+        );
+
+        // Lọc các MAC chưa có trong hệ thống
+        const newDevices = normalizedFoundMACs.filter(
+            mac => !existingMACs.has(mac)
+        );
+
+        return {
+            success: true,
+            new_devices: newDevices.map(mac => ({ mac_address: mac }))
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: "Lỗi khi tìm thiết bị mới",
+            error: error.message
+        };
+    }
+};

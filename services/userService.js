@@ -148,7 +148,7 @@ exports.UpdateInfomationOfUser = async(id, infoUser) =>{
         }
 
         if (Object.keys(infoUser).length === 0) {
-            return { success: false, message: "No update fields provided" };
+            return { success: false, message: "Không có thông tin nào được thay đổi" };
         }
 
         const updatedUser = await User.findByIdAndUpdate(id,
@@ -158,16 +158,16 @@ exports.UpdateInfomationOfUser = async(id, infoUser) =>{
 
         // Kiểm tra nếu không tìm thấy user
         if (!updatedUser) {
-            return { success: false, message: "User not found" };
+            return { success: false, message: "Không tìm thấy thông tin nhân viên" };
         }
 
         return {
             success: true,
-            message: "User updated successfully",
+            message: "Cập nhật thông tin nhân viên thành công",
             updatedUser
         };
     } catch (error) {
-        return { success: false, message: `Failed to update user: ${error.message}` };
+        return { success: false, message: `Lỗi khi cập nhật thông tin nhân viên: ${error.message}` };
     }
 }
 
@@ -210,7 +210,7 @@ exports.restoreUser = async(_id) =>{
             if (user_existing.department_id) {
                 await Department.findByIdAndUpdate(user_existing.department_id, { $inc: { total_member: 1 } });
             }
-            return {success: true, message: "User restore successfully"}
+            return {success: true, message: "Khôi phục thông tin nhân viên thành công"}
         }
     } catch (error) {
         return { success: false, message: `Internal server error: ${error}`};

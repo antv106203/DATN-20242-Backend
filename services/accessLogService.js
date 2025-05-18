@@ -1,4 +1,5 @@
 const AccessLog = require("../models/accessLog.model");
+const Device = require("../models/device.model");
 const Fingerprint = require("../models/fingerprint.model")
 const User = require("../models/user.model")
 exports.getListAccessLog = async (page, limit, order = "asc", department_id = null, result, fromDate = null, toDate = null) => {
@@ -73,8 +74,22 @@ exports.getListAccessLog = async (page, limit, order = "asc", department_id = nu
     }
 };
 
-exports.createAcessLog = async (fingerprint_id, device_id, result) =>{
+exports.createAcessLog = async (fingerprint_id, mac_address, result) =>{
     try {
+
+        const device = await Device.findOne({
+            mac_address: mac_address
+        });
+
+        if (!device) {
+            return {
+                success: false,
+                message: "Không tìm thấy thiết bị"
+            };
+        }
+        const device_id = device._id;
+        // Tìm fingerprint_id trong bảng Fingerprint
+        // Nếu không tìm thấy thì trả về lỗi        
         const fingerprint = await Fingerprint.findOne({
             fingerprint_id: fingerprint_id,
             device_id: device_id
@@ -90,7 +105,7 @@ exports.createAcessLog = async (fingerprint_id, device_id, result) =>{
         await newLog.save();
         return{
             success: true,
-            message: "Someone is coming",
+            message: "Có lượt truy cập mới",
             accessLog: newLog
         }
     } catch (error) {
