@@ -11,6 +11,7 @@ const dbConnect = require('./config/dbConnect');
 const { startExpiredCheck } = require('./services/fingerprintService');
 const client = require('./config/mqttConnect');
 const { createAcessLog } = require('./services/accessLogService');
+const deviceService = require("./services/deviceService");
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
+deviceService.updateStatusDevice();
 app.use(cors({
     origin: "http://localhost:5173", // Cho phép React truy cập API
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",

@@ -18,7 +18,12 @@ const DeviceSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'Department',
         required: true
-    }
+    },
+    status: {
+        type: String,
+        enum: ["ONLINE", "OFFLINE"],
+        default: "OFFLINE"
+    },
 })
 
 DeviceSchema.plugin(AutoIncrement, { inc_field: "device_id", start_seq: 1 });

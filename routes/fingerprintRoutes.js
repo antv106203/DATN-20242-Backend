@@ -5,8 +5,12 @@ const router = express.Router();
 
 router.post("/listFingerprint.json", isAuth(["ADMIN", "GAURD"]) ,fingerprintController.getListFingerprints);
 router.post("/disableFingerprint.json", fingerprintController.disableFingerprint);
-router.post("/enableFingerprint.json", fingerprintController.enableFingerprint);
+router.put("/enableFingerprint.json", fingerprintController.enableFingerprint);
 router.post("/requestCreateFingerprint.json", fingerprintController.requestCreateFingerprint);
 router.post("/createFingerprint.json", fingerprintController.createFingerprint);
+router.post("/getDetailFingerprint.json", fingerprintController.getDetailFingerprint);
+router.put("/updateFingerprint.json", fingerprintController.updateFingerprint);
+router.post("/deleteFingerprint.json", fingerprintController.deleteFingerprint);
+
 
 module.exports = router;

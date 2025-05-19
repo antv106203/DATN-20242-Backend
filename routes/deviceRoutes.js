@@ -6,5 +6,7 @@ router.post("/ListDevice.json", deviceController.getListDevice);
 router.post("/createNewDevice.json", deviceController.createNewDevice);
 router.put("/updateDevice.json", deviceController.updateDevice);
 router.get("/getUnregisteredDevices.json", deviceController.getUnregisteredDevices);
+router.post("/detailDevice.json", deviceController.getDetailDevice);
+router.post("/deleteDevice.json", deviceController.deleteDevice);
 
 module.exports = router;

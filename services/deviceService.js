@@ -69,12 +69,12 @@ exports.getListDevice = async(page = 1, limit = 10, search = "", order = "asc", 
         }
 
         if (department_id) {
-            filter.department_id = new mongoose.Types.ObjectId(department_id);
+            filter.department_id = department_id
         }
         
         // Xử lý sắp xếp theo `department_name`
         const sortOrder = order === "asc" ? 1 : -1;
-        let sortOptions = { device_name: sortOrder };
+        let sortOptions = { device_id: sortOrder };
 
         // Lấy danh sách phòng ban
         const devices = await Device.find(filter)
@@ -105,18 +105,16 @@ exports.getListDevice = async(page = 1, limit = 10, search = "", order = "asc", 
     }
 }
 
-exports.updateDevice = async(_id , update_device) =>{
+exports.updateDevice = async(_id , device_name) =>{
     try {
-        const {device_name, department_id} = update_device;
-        if(!device_name || !department_id){
+        if(!device_name){
             return {
                 success: false,
-                message: "name and department are required"
+                message: "Tên không hợp lệ"
             }
         }
 
         const existingDevice = await Device.findById(_id);
-        console.log(existingDevice)
         if (!existingDevice) {
             return {
                 success: false,
@@ -124,29 +122,29 @@ exports.updateDevice = async(_id , update_device) =>{
             }
         }
 
-        if (existingDevice.device_name === device_name && existingDevice.department_id.toString() === department_id) {
+        if (existingDevice.device_name === device_name) {
             return {
                 success: false,
-                message: "No changes detected"
+                message: "Không có thay đổi nào được thực hiện"
             }
         }
 
         const updatedDevice = await Device.findByIdAndUpdate(
             _id,
-            { device_name, department_id },
+            { device_name},
             { new: true } // Trả về thiết bị đã cập nhật
         );
 
         return {
             success: true,
-            message: "Device updated successfully",
+            message: "Cập nhật thiết bị thành công",
             data: updatedDevice
         }
 
     } catch (error) {
         return { 
             success: false, 
-            message: `Failed to update device: ${error}`
+            message: `Lỗi khi cập nhật thiết bị: ${error}`
         };
     }
 }
@@ -197,3 +195,83 @@ exports.findAvailableDevices = async () => {
         };
     }
 };
+
+exports.getDetailDevice = async(_id) =>{
+    try {
+        const device = await Device.findById(_id)
+        .populate("department_id");
+
+        if (!device) {
+            return { 
+                success: false, 
+                message: "Không tìm thấy thiết bị" 
+            };
+        }
+        return { 
+            success: true, 
+            message: "Lấy thông tin thiết bị thành công", 
+            data: device 
+        };
+    }
+    catch (error) {
+        return { 
+            success: false, 
+            message: `Lỗi khi lấy thông tin thiết bị: ${error}` 
+        };
+    }
+}
+
+exports.deleteDevice = async (id) => {
+    try {
+        const device = await Device.findById(id);
+        if (!device) {
+            return { 
+                success: false, 
+                message: "Không tìm thấy thiết bị" 
+            };
+        }
+
+        await Device.findByIdAndDelete(id);
+
+        return {
+            success: true,
+            message: "Xóa thiết bị thành công"
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: "Lỗi hệ thống, không thể xóa thiết bị"
+        };
+    }
+}
+
+exports.updateStatusDevice = async () => {
+    mqttClient.on("message", async(topic, messageBuffer) => {
+        if (topic === '/status/response') {
+            try {
+            const message = JSON.parse(messageBuffer.toString());
+            const { mac_address, status } = message;
+
+            if (!mac_address || !status) {
+                console.warn('Invalid status message:', message);
+                return;
+            }
+
+            // Kiểm tra device đã có trong DB chưa
+            const device = await Device.findOne({ mac_address: mac_address });
+            if (!device) {
+                console.log(`Device with MAC ${mac_address} not found, skipping update`);
+                return;  // Bỏ qua nếu không có device
+            }
+
+            // Cập nhật trạng thái device trong DB
+            device.status = status.toUpperCase();
+            await device.save();
+
+            console.log(`Updated device ${mac_address} status to ${status}`);
+            } catch (error) {
+            console.error('Failed to process status message:', error);
+            }
+        }
+    })
+} 

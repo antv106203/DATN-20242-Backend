@@ -54,8 +54,9 @@ exports.createNewDevice = async(req, res) =>{
 exports.updateDevice = async(req, res) =>{
     try {
         const {_id} = req.query;
+        const {device_name} = req.body;
 
-        const result = await deviceService.updateDevice(_id, req.body);
+        const result = await deviceService.updateDevice(_id, device_name);
         if(result.success){
             return res.status(200).json({
                 status_code: 200,
@@ -64,13 +65,13 @@ exports.updateDevice = async(req, res) =>{
             });
         }
         else{
-            return res.status(400).json({
+            return res.status(200).json({
                 status_code: 400,
                 message: result.message
             });
         }
     } catch (error) {
-        return res.status(500).json({
+        return res.status(200).json({
             status_code: 500,
             message: error,
         });    
@@ -101,3 +102,54 @@ exports.getUnregisteredDevices = async (req, res) => {
         });
     }
 };
+
+exports.getDetailDevice = async (req, res) => {
+    const { _id } = req.body;
+    try {
+        const result = await deviceService.getDetailDevice(_id);
+        if(result.success){
+            return res.status(200).json({
+                status_code: 200,
+                message: result.message,
+                data: result.data
+            });
+        }
+        else{
+            return res.status(200).json({
+                status_code: 404,
+                message: result.message
+            });
+        }
+    } catch (error) {
+        return res.status(200).json({
+            status_code: 500,
+            message: `Internal server error ${error}`
+        });
+    }
+}
+
+exports.deleteDevice = async (req, res) => {
+    const {_id} = req.body;
+
+    try {
+        const result = await deviceService.deleteDevice(_id);
+        if(result.success){
+            return res.status(200).json({
+                status_code: 200,
+                message: result.message,
+                data: result.data
+            });
+        }
+        else {
+            return res.status(200).json({
+                status_code: 400,
+                message: result.message
+            });
+        }
+    } catch (error) {
+        return res.status(200).json({
+            status_code: 500,
+            message: `Internal server error ${error}`
+        });
+    }
+}

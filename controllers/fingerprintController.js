@@ -33,7 +33,7 @@ exports.getListFingerprints = async (req, res) =>{
 
 exports.disableFingerprint = async (req, res) =>{
     try {
-        const {id_fingerprint} = req.query;
+        const {id_fingerprint} = req.body;
         const result = await fingerprintService.disableFingerprint(id_fingerprint);
         if(result.success){
             return res.status(200).json({
@@ -144,6 +144,82 @@ exports.createFingerprint = async (req, res) =>{
         return res.status(201).json({
             status_code: 500,
             message: `Internal server error ${error}`
+        });
+    }
+}
+
+exports.getDetailFingerprint = async (req, res) =>{
+    const { _id } = req.body;
+    try {
+        const result = await fingerprintService.getDetailFingerprint(_id);
+        if(result.success){
+            return res.status(200).json({
+                status_code: 200,
+                message: result.message,
+                data: result.data
+            });
+        }
+        else{
+            return res.status(200).json({
+                status_code: 404,
+                message: result.message
+            });
+        }
+    } catch (error) {
+        return res.status(200).json({
+            status_code: 500,
+            message: `Internal server error ${error}`
+        });
+    }
+}
+
+exports.updateFingerprint = async (req, res) => {
+    try {
+        const { _id } = req.query;
+        const { fingerprint_name, expiry_at } = req.body;
+
+        const result = await fingerprintService.updateFingerprint(_id, fingerprint_name, expiry_at);
+        if(result.success){
+            return res.status(200).json({
+                status_code: 200,
+                message: result.message
+            })
+        }
+        else{
+            return res.status(200).json({
+                status_code: 400,
+                message: result.message
+            })
+        }
+    } catch (error) {
+        return res.status(200).json({
+            status_code: 500,
+            message: `Internal server error ${error}`
+        });
+    }
+}
+
+exports.deleteFingerprint = async (req, res) => {
+    const {fingerprint_id, mac_address, _id} = req.body;
+
+    try {
+        const result = await fingerprintService.deleteFingerprint(fingerprint_id, mac_address, _id);
+        if(result.success){
+            return res.status(200).json({
+                status_code: 200,
+                message: result.message
+            })
+        }
+        else{
+            return res.status(200).json({
+                status_code: 400,
+                message: result.message
+            })
+        }
+    } catch (error) {
+        return res.status(200).json({
+            status_code: 500,
+            message: `Internal server error: ${error.message || "Unknown error"}`
         });
     }
 }
