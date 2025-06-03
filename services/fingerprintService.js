@@ -118,44 +118,7 @@ exports.getListFingerprint = async(page, limit, search,  order = "desc", status 
         return { success: false, message: `Failed to fetch fingerprint list: ${error}`};
     }
 }
-
-exports.disableFingerprint = async (id_fingerprint) => {
-    try {
-        const fingerprint_existing = await Fingerprint.findById(id_fingerprint);
-
-        if(!fingerprint_existing){
-            return { success: false, message: "Không tìm thấy dấu vân tay" };
-        }
-
-        else {
-            await Fingerprint.findByIdAndUpdate(id_fingerprint, {status: "INACTIVE", expiry_at: null}, {new: true});
-            return { success: true, message: "Vô hiệu hóa dấu vân tay thành công" };
-        }
-
-    } catch (error) {
-        return { success: false, message: `Lỗi khi vô hiệu hóa vân tay: ${error}`};
-    }
-}
-
-exports.enableFingerprint = async (id_fingerprint, expiry_at) => {
-    try {
-        const fingerprint_existing = await Fingerprint.findById(id_fingerprint);
-
-        if(!fingerprint_existing){
-            return { success: false, message: "Không tìm thấy dấu vân tay" };
-        }
-
-        else {
-            await Fingerprint.findByIdAndUpdate(id_fingerprint, {status: "ACTIVE", expiry_at: expiry_at}, {new: true});
-            return { success: true, message: "Kích hoạt dấu vân tay thành công" };
-        }
-
-    } catch (error) {
-        return { success: false, message: `Lỗi khi kích hoạt dấu vân tay: ${error}`};
-    }
-}
-
-const AutomaticDisableFingerprint = async () =>{
+exports.AutomaticDisableFingerprint = async () => {
     try {
         const currentTime = new Date();
 
@@ -172,51 +135,46 @@ const AutomaticDisableFingerprint = async () =>{
             }
         );
 
-        // 2. Lấy danh sách INACTIVE, và populate device để lấy mac_address
+        // 1. Lấy danh sách tất cả thiết bị
+        const allDevices = await Device.find();
+
+        // 2. Lấy toàn bộ vân tay INACTIVE và populate thiết bị
         const inactiveFingerprints = await Fingerprint.find({ status: "INACTIVE" })
             .populate("device_id");
 
-        console.log("a",inactiveFingerprints)
-
-        // 3. Gom nhóm theo mac_address
+        // 3. Gom các fingerprint_id theo mac_address
         const groupedByMac = {};
-
         inactiveFingerprints.forEach(fp => {
             const device = fp.device_id;
-            if (!device || !device.mac_address) return; // bỏ qua nếu device không tồn tại
-
+            if (!device || !device.mac_address) return;
             const mac = device.mac_address;
 
             if (!groupedByMac[mac]) {
                 groupedByMac[mac] = [];
             }
-
-            groupedByMac[mac].push(
-                fp.fingerprint_id,
-            );
+            groupedByMac[mac].push(fp.fingerprint_id);
         });
 
+        // 4. Tạo payload tổng hợp tất cả MAC
+        const dataToSend = allDevices.map(device => ({
+            mac_address: device.mac_address,
+            expired_fingerprints: groupedByMac[device.mac_address] || []
+        }));
 
-        // 4. Gửi đến từng thiết bị
-        for (const mac in groupedByMac) {
-            const topic = `/auto/expired_fingerprints/`;
-            const payload = JSON.stringify({
-                mac_address: mac,
-                expired_fingerprints: groupedByMac[mac]
-            });
+        const topic = `/auto/expired_fingerprints/all`;
+        const payload = JSON.stringify({ data: dataToSend });
 
-            mqttClient.publish(topic, payload, {}, (err) => {
-                if (err) {
-                    console.error(`Lỗi khi gửi đến ${topic}:`, err);
-                } else {
-                    console.log(`Đã gửi expired fingerprints đến thiết bị ${mac}`);
-                }
-            });
-        }
+        mqttClient.publish(topic, payload, {}, (err) => {
+            if (err) {
+                console.error(`Lỗi khi gửi đến ${topic}:`, err);
+            } else {
+                console.log(`Đã gửi danh sách expired fingerprints của tất cả thiết bị`);
+            }
+        });
 
         return {
             success: true,
-            message: `Đã cập nhật ${result.modifiedCount} fingerprint(s) và gửi đến thiết bị tương ứng`
+            message: `Đã cập nhật ${result.modifiedCount} fingerprint(s) và gửi gói tin tổng hợp`
         };
     } catch (error) {
         return {
@@ -224,18 +182,58 @@ const AutomaticDisableFingerprint = async () =>{
             message: `Failed to automatic disable fingerprint: ${error}`
         };
     }
-}
+};
+
 
 exports.startExpiredCheck = () =>{
     setInterval(async () => {
         try {
-            const result = await AutomaticDisableFingerprint();
+            const result = await this.AutomaticDisableFingerprint();
 
             console.log(result.message)
         } catch (error) {
             console.error('Lỗi trong quá trình kiểm tra dấu vân tay hết hạn:', error);
         }
-    }, 120000); // Kiểm tra mỗi 2 phút
+    }, 12000); // Kiểm tra mỗi 2 phút
+}
+
+exports.disableFingerprint = async (id_fingerprint) => {
+    try {
+        const fingerprint_existing = await Fingerprint.findById(id_fingerprint);
+
+        if(!fingerprint_existing){
+            return { success: false, message: "Không tìm thấy dấu vân tay" };
+        }
+
+        else {
+            await Fingerprint.findByIdAndUpdate(id_fingerprint, {status: "INACTIVE", expiry_at: null}, {new: true});
+            this.AutomaticDisableFingerprint();
+            return { success: true, message: "Vô hiệu hóa dấu vân tay thành công" };
+        }
+
+    } catch (error) {
+        return { success: false, message: `Lỗi khi vô hiệu hóa vân tay: ${error}`};
+    }
+}
+
+
+exports.enableFingerprint = async (id_fingerprint, expiry_at) => {
+    try {
+        const fingerprint_existing = await Fingerprint.findById(id_fingerprint);
+
+        if(!fingerprint_existing){
+            return { success: false, message: "Không tìm thấy dấu vân tay" };
+        }
+
+        else {
+            await Fingerprint.findByIdAndUpdate(id_fingerprint, {status: "ACTIVE", expiry_at: expiry_at}, {new: true});
+            this.AutomaticDisableFingerprint();
+            return { success: true, message: "Kích hoạt dấu vân tay thành công" };
+        }
+
+    } catch (error) {
+        return { success: false, message: `Lỗi khi kích hoạt dấu vân tay: ${error}`};
+    }
 }
 
 exports.getDetailFingerprint = async (_id) => {

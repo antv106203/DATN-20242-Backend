@@ -1,4 +1,5 @@
 const Department = require("../models/department.model");
+const Fingerprint = require("../models/fingerprint.model");
 const User = require("../models/user.model");
 const { validateUserInput } = require("../utils/UserUtils");
 
@@ -171,31 +172,37 @@ exports.UpdateInfomationOfUser = async(id, infoUser) =>{
     }
 }
 
-exports.getDetailUser = async(_id) =>{
+exports.getDetailUser = async (_id) => {
     try {
-        const user = await User.findById(_id)
+        // Tìm user và populate phòng ban
+        const user = await User.findById(_id).populate("department_id");
 
         if (!user) {
-            return { 
-                success: false, 
+            return {
+                success: false,
                 message: "User not found"
             };
         }
 
-        else{
-            return { 
-                success: true, 
-                message: "User details fetched successfully", 
-                data: user 
-            };
-        }
+        // Lấy danh sách fingerprint theo user_id
+        const fingerprints = await Fingerprint.find({ user_id: _id }).populate("device_id");
+
+        return {
+            success: true,
+            message: "User details fetched successfully",
+            data: {
+                user,
+                fingerprints
+            }
+        };
+
     } catch (error) {
-        return { 
-            success: false, 
+        return {
+            success: false,
             message: `Failed to fetch user details: ${error}`
         };
     }
-}
+};
 
 exports.restoreUser = async(_id) =>{
     try {

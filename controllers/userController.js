@@ -56,6 +56,7 @@ exports.deleteUserFromList = async (req, res) =>{
     try {
         
         const {_idUser} = req.body;
+        console.log("a", _idUser)
         const result = await userService.deleteUserFromList(_idUser);
         if(result.success){
             return res.status(200).json({
@@ -64,13 +65,13 @@ exports.deleteUserFromList = async (req, res) =>{
             })
         }
         else{
-            return res.status(400).json({
+            return res.status(200).json({
                 status_code: 400,
                 message: result.message, 
             })
         }
     } catch (error) {
-        return res.status(500).json({
+        return res.status(200).json({
             status_code: 500,
             message: `Internal server error: ${error}`
         })
@@ -104,32 +105,63 @@ exports.getListUser = async (req, res) =>{
     }
 }
 
-exports.UpdateInfomationOfUser = async(req, res) =>{
+// exports.UpdateInfomationOfUser = async(req, res) =>{
+//     try {
+//         const {_idUser} = req.query;
+//         const {infoUser} = req.body;
+//         const result = await userService.UpdateInfomationOfUser(_idUser, infoUser);
+//         if(result.success){
+//             return res.status(200).json({
+//                 status_code: 200,
+//                 message: result.message, 
+//                 newInfomationOfUser: result.updatedUser
+//             })
+//         }
+//         else{
+//             return res.status(400).json({
+//                 status_code: 400,
+//                 message: result.message
+//             })
+//         }
+
+//     } catch (error) {
+//         return res.status(500).json({
+//             status_code: 500,
+//             message: `Internal server error ${error}`
+//         });
+//     }
+// }
+exports.updateUser = async (req, res) => {
     try {
-        const {_idUser} = req.query;
-        const {infoUser} = req.body;
-        const result = await userService.UpdateInfomationOfUser(_idUser, infoUser);
-        if(result.success){
+        const { id } = req.query;
+        // req.body chứa các trường cần update
+        const infoUser = { ...req.body };
+        // Nếu có upload mới, req.fileURL sẽ là URL Cloudinary
+        if (req.fileURL) {
+            infoUser.avatar = req.fileURL;
+        }
+
+        const result = await userService.UpdateInfomationOfUser(id, infoUser);
+
+        if (result.success) {
             return res.status(200).json({
                 status_code: 200,
-                message: result.message, 
-                newInfomationOfUser: result.updatedUser
-            })
-        }
-        else{
+                message: result.message,
+                data: result.updatedUser
+            });
+        } else {
             return res.status(400).json({
                 status_code: 400,
                 message: result.message
-            })
+            });
         }
-
     } catch (error) {
         return res.status(500).json({
             status_code: 500,
-            message: `Internal server error ${error}`
+            message: `Lỗi khi cập nhật: ${error.message}`
         });
     }
-}
+};
 
 exports.getDetailUser = async (req, res) =>{
     try {

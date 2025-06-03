@@ -7,6 +7,7 @@ const deviceRoutes = require("./routes/deviceRoutes")
 const userRoutes = require("./routes/userRoutes");
 const fingerprintRoutes = require("./routes/fingerprintRoutes");
 const accessLogRoutes = require("./routes/accessLogRoutes");
+const generalRoutes = require("./routes/generalRoutes");
 const dbConnect = require('./config/dbConnect');
 const { startExpiredCheck } = require('./services/fingerprintService');
 const client = require('./config/mqttConnect');
@@ -23,7 +24,7 @@ client.on("message", async (topic, message) => {
     try {
         if(topic.toString() === "/fingerprint"){
           const jsonMessage = JSON.parse(message.toString());
-          const res = await createAcessLog(jsonMessage.fingerprint_id, jsonMessage.mac_address, jsonMessage.result);
+          const res = await createAcessLog(jsonMessage.fingerprint_id, jsonMessage.mac_address, jsonMessage.message);
           if(res.success){
               console.log("AccessLog created successfully:", res.accessLog);
           }
@@ -55,6 +56,7 @@ app.use('/api/device', deviceRoutes);
 app.use('/api/user',userRoutes );
 app.use('/api/fingerprint', fingerprintRoutes);
 app.use("/api/accessLog", accessLogRoutes);
+app.use("/api/general", generalRoutes);
 
 startExpiredCheck();
 

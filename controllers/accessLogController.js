@@ -1,5 +1,5 @@
 const accessLogService = require("../services/accessLogService")
-
+const mqttClient = require("../config/mqttConnect");
 exports.getListAccessLog = async (req, res) =>{
     try {
         const {page, limit, order , department_id , result, fromDate, toDate} = req.body;
@@ -28,28 +28,15 @@ exports.getListAccessLog = async (req, res) =>{
     }
 }
 
-exports.createAccessLog = async (req, res) =>{
-    try {
-        const {fingerprint_id, device_id, result} = req.body;
-
-        const rs = await accessLogService.createAcessLog(fingerprint_id, device_id, result);
-        if(rs.success){
-            return res.status(201).json({
-                status_code: 201,
-                message: rs.message,
-                accessLog: rs.accessLog
-            })
+exports.createAccessLog = async () =>{
+    mqttClient.on("message", async (topic, messageBuffer) => {
+        if (topic === "/fingerprint") {
+            try {
+                const payload = JSON.parse(messageBuffer.toString());
+                await accessLogService.createAcessLog(payload.fingerprint_id, payload.mac_address, payload.message);
+            } catch (err) {
+                console.error("Lỗi khi xử lý message từ /fingerprint:", err);
+            }
         }
-        else{
-            return res.status(200).json({
-                status_code: 400,
-                message: rs.message
-            })
-        }
-    } catch (error) {
-        return res.status(200).json({
-            status_code: 500,
-            message: `Internal server error ${error}`
-        });
-    }
+    });
 }

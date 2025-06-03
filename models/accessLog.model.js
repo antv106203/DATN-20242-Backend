@@ -16,9 +16,17 @@ const AccessLogSchema = mongoose.Schema({
     },
     result: {
         type: String,
-        enum: ["SUCCESS", "FAILURE"]
-    }
-});
+        enum: ["success", "failed"]
+    },
+    created_at: {
+        type: Date,
+        default: Date.now
+    },
+    updated_at: {
+        type: Date,
+        default: Date.now
+    },
+}, {timestamps: true});
 
 AccessLogSchema.plugin(AutoIncrement, { inc_field: "log_id", start_seq: 1 })
 

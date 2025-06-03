@@ -2,14 +2,14 @@ const AccessLog = require("../models/accessLog.model");
 const Device = require("../models/device.model");
 const Fingerprint = require("../models/fingerprint.model")
 const User = require("../models/user.model")
-exports.getListAccessLog = async (page, limit, order = "asc", department_id = null, result, fromDate = null, toDate = null) => {
+exports.getListAccessLog = async (page, limit, order = "desc", department_id = null, result, fromDate = null, toDate = null) => {
     try {
         // Chuyển đổi dữ liệu
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 10;
         const skip = (page - 1) * limit;
 
-        const sortOrder = order === "asc" ? 1 : -1;
+        const sortOrder = order === "desc" ? 1 : -1;
         let sortOptions = { access_time: sortOrder };
 
         let filter = {};
