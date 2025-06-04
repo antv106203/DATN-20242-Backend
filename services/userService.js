@@ -60,6 +60,12 @@ exports.deleteUserPre = async(_id) =>{
 
         else{
             await User.findByIdAndUpdate(_id, {status: "DELETED"}, {new: true});
+
+            // Cập nhật tất cả vân tay của người dùng thành INACTIVE
+            await Fingerprint.updateMany(
+                { user_id: _id },
+                { status: "INACTIVE" }
+            );
             if (user_existing.department_id) {
                 await Department.findByIdAndUpdate(user_existing.department_id, { $inc: { total_member: -1 } });
             }
@@ -77,6 +83,15 @@ exports.deleteUserFromList = async (_id) => {
 
         if (!user_existing) {
             return { success: false, message: "Không tìm thấy người dùng" };
+        }
+
+        // Kiểm tra còn vân tay không
+        const fingerprintCount = await Fingerprint.countDocuments({ user_id: _id });
+        if (fingerprintCount > 0) {
+            return {
+                success: false,
+                message: `Không thể xóa. Người dùng còn ${fingerprintCount} vân tay trong hệ thống.`
+            };
         }
 
         // Xóa user vĩnh viễn khỏi database
