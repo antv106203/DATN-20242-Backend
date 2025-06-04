@@ -45,10 +45,9 @@ app.use(express.urlencoded({ extended: true }));
 
 deviceService.updateStatusDevice();
 app.use(cors({
-    origin: "http://localhost:5173", // Cho phép React truy cập API
+    origin: "*", // Cho phép tất cả domain truy cập
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true // Cho phép gửi cookie, token
-  }));
+}));
 // Routes
 app.use('/api/account', accountRoutes);
 app.use('/api/department', departmentRoutes);
