@@ -44,10 +44,26 @@ app.use(express.urlencoded({ extended: true }));
 
 
 deviceService.updateStatusDevice();
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://datn-20242-frontend.onrender.com',
+  'https://antuhust.id.vn'
+];
+
 app.use(cors({
-    origin: "*", // Cho phép tất cả domain truy cập
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  origin: function (origin, callback) {
+    // Cho phép cả request không có origin (ví dụ: Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
 }));
+
 // Routes
 app.use('/api/account', accountRoutes);
 app.use('/api/department', departmentRoutes);
