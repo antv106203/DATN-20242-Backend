@@ -41,13 +41,13 @@ exports.createNewDepartment = async (req, res) =>{
             })
         }
         else{
-            return res.status(200).json({
+            return res.status(201).json({
                 status_code: 400,
                 message: result.message,
             })
         }
     } catch (error) {
-        return res.status(200).json({
+        return res.status(201).json({
             status_code: 500,
             message: error,
         })

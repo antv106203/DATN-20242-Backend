@@ -31,7 +31,7 @@ exports.loginAccount = async(email, password) =>{
         
 
         const token = jwt.sign(
-            {Email: account.email, role: account.role},
+            {Email: account.email, role: account.role, _id: account._id},
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );

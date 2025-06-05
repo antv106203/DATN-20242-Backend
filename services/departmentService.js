@@ -1,7 +1,7 @@
 const Department = require("../models/department.model");
 const mongoose = require("mongoose");
 
-exports.getListDepartment = async (search = "", order = "asc", floor = null) =>{
+exports.getListDepartment = async (search = "", order = "desc", floor = null) =>{
     try {
         // Chuyển đổi dữ liệu
         // page = parseInt(page) || 1;
@@ -24,8 +24,8 @@ exports.getListDepartment = async (search = "", order = "asc", floor = null) =>{
         }
 
         // Xử lý sắp xếp theo `department_name`
-        const sortOrder = order === "asc" ? 1 : -1;
-        let sortOptions = { department_name: sortOrder };
+        const sortOrder = order === "desc" ? 1 : -1;
+        let sortOptions = { updatedAt: -1 }; 
 
         // Lấy danh sách phòng ban
         const departments = await Department.find(filter)
