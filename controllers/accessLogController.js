@@ -27,16 +27,3 @@ exports.getListAccessLog = async (req, res) =>{
         });
     }
 }
-
-exports.createAccessLog = async () =>{
-    mqttClient.on("message", async (topic, messageBuffer) => {
-        if (topic === "/fingerprint") {
-            try {
-                const payload = JSON.parse(messageBuffer.toString());
-                await accessLogService.createAcessLog(payload.fingerprint_id, payload.mac_address, payload.message);
-            } catch (err) {
-                console.error("Lỗi khi xử lý message từ /fingerprint:", err);
-            }
-        }
-    });
-}
