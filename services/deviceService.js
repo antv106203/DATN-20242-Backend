@@ -1,4 +1,5 @@
 const Device = require("../models/device.model");
+const Fingerprint = require("../models/fingerprint.model")
 let foundMACs = new Set();
 const mqttClient = require("../config/mqttConnect");
 
@@ -228,6 +229,15 @@ exports.deleteDevice = async (id) => {
             return { 
                 success: false, 
                 message: "Không tìm thấy thiết bị" 
+            };
+        }
+
+        // Kiểm tra nếu còn vân tay liên kết với thiết bị
+        const fingerprintCount = await Fingerprint.countDocuments({ device_id: id });
+        if (fingerprintCount > 0) {
+            return {
+                success: false,
+                message: "Không thể xóa thiết bị vì vẫn còn vân tay được lưu trong thiết bị"
             };
         }
 
