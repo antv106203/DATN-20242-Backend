@@ -1,5 +1,6 @@
-// use for create user
 export const validateUserInput = (user) => {
+    const errors = [];
+
     // 1. Kiểm tra các trường bắt buộc
     const requiredFields = [
         { key: 'full_name', label: 'Họ và tên' },
@@ -11,24 +12,33 @@ export const validateUserInput = (user) => {
 
     for (const field of requiredFields) {
         if (!user[field.key]) {
-            return { success: false, message: `${field.label} là  thông tin bắt buộc phải điền` };
+            errors.push(`${field.label} là thông tin bắt buộc phải điền`);
         }
     }
 
-    // 2. Kiểm tra định dạng email
+    // 2. Kiểm tra định dạng email nếu đã nhập
     if (user.email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(user.email)) {
-            return { success: false, message: 'Email không hợp lệ' };
+            errors.push('Email không hợp lệ');
         }
     }
 
     // 3. Nếu có số điện thoại thì kiểm tra định dạng
-    if (user.phone) {
-        const phoneRegex = /^\+?\d{10,15}$/; // Hỗ trợ +84 hoặc 10-15 số
-        if (!phoneRegex.test(user.phone)) {
-            return { success: false, message: 'Số điện thoại không hợp lệ' };
+    if (user.phone_number) {
+        const phoneRegex = /^\+?\d{10,15}$/;
+        if (!phoneRegex.test(user.phone_number)) {
+            errors.push('Số điện thoại không hợp lệ');
         }
+    }
+
+    // Trả kết quả
+    if (errors.length > 0) {
+        return {
+            success: false,
+            message: errors.join('\n'), // hoặc return cả mảng nếu cần hiển thị từng dòng riêng
+            errors: errors,             // để dùng nếu muốn hiển thị từng dòng
+        };
     }
 
     return { success: true, message: 'Thông tin hợp lệ' };
