@@ -36,8 +36,7 @@ export const validateUserInput = (user) => {
     if (errors.length > 0) {
         return {
             success: false,
-            message: errors.join('\n'), // hoặc return cả mảng nếu cần hiển thị từng dòng riêng
-            errors: errors,             // để dùng nếu muốn hiển thị từng dòng
+            message: errors
         };
     }
 
