@@ -45,6 +45,7 @@ const UserSchema = new mongoose.Schema({
     sex: {
         type: String,
         enum: ["NAM", "NỮ"],
+        required: true
     },
 
     created_at: {

@@ -13,11 +13,34 @@ const { startExpiredCheck } = require('./services/fingerprintService');
 const client = require('./config/mqttConnect');
 const { createAcessLog } = require('./services/accessLogService');
 const deviceService = require("./services/deviceService");
+const http = require('http');
+const { Server } = require('socket.io')
+
 
 const app = express();
+const httpServer = http.createServer(app);
 
 // Kết nối đến database
 dbConnect();
+
+// Tạo socket server
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*', // Hoặc chỉ định domain
+    methods: ['GET', 'POST']
+  }
+});
+
+// Gắn global để dùng trong service
+global.io = io;
+
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected');
+
+  socket.on('disconnect', () => {
+    console.log('❌ Client disconnected');
+  });
+});
 
 client.on("message", async (topic, message) => {
     console.log("MQTT received topic:", topic.toString());
@@ -74,4 +97,4 @@ app.use("/api/general", generalRoutes);
 
 startExpiredCheck();
 
-module.exports = app;
+module.exports = httpServer;

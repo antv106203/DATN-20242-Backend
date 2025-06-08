@@ -256,32 +256,39 @@ exports.deleteDevice = async (id) => {
 }
 
 exports.updateStatusDevice = async () => {
-    mqttClient.on("message", async(topic, messageBuffer) => {
+    mqttClient.on("message", async (topic, messageBuffer) => {
         if (topic === '/status/response') {
             try {
-            const message = JSON.parse(messageBuffer.toString());
-            const { mac_address, status } = message;
+                const message = JSON.parse(messageBuffer.toString());
+                const { mac_address, status } = message;
 
-            if (!mac_address || !status) {
-                console.warn('Invalid status message:', message);
-                return;
-            }
+                if (!mac_address || !status) {
+                    console.warn('Invalid status message:', message);
+                    return;
+                }
 
-            // Kiểm tra device đã có trong DB chưa
-            const device = await Device.findOne({ mac_address: mac_address });
-            if (!device) {
-                console.log(`Device with MAC ${mac_address} not found, skipping update`);
-                return;  // Bỏ qua nếu không có device
-            }
+                const device = await Device.findOne({ mac_address });
+                if (!device) {
+                    console.log(`Device with MAC ${mac_address} not found, skipping update`);
+                    return;
+                }
 
-            // Cập nhật trạng thái device trong DB
-            device.status = status.toUpperCase();
-            await device.save();
+                device.status = status.toUpperCase();
+                await device.save();
 
-            console.log(`Updated device ${mac_address} status to ${status}`);
+                console.log(`Updated device ${mac_address} status to ${status}`);
+
+                // ✅ Emit socket event để FE biết mà reload danh sách thiết bị
+                if (global.io) {
+                    global.io.emit("device-status-updated", {
+                        mac_address,
+                        status: device.status
+                    });
+                }
+
             } catch (error) {
-            console.error('Failed to process status message:', error);
+                console.error('Failed to process status message:', error);
             }
         }
-    })
-} 
+    });
+};

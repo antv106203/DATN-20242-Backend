@@ -4,32 +4,34 @@ const Fingerprint = require("../models/fingerprint.model")
 const User = require("../models/user.model")
 exports.getListAccessLog = async (page, limit, order = "desc", department_id = null, result, fromDate = null, toDate = null) => {
     try {
-        // Chuyển đổi dữ liệu
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 10;
         const skip = (page - 1) * limit;
 
-        const sortOrder = order === "desc" ? 1 : -1;
-        let sortOptions = { access_time: sortOrder };
+        const sortOrder = order === "desc" ? -1 : 1;
+        const sortOptions = { access_time: sortOrder };
 
         let filter = {};
 
-        // Lọc theo trạng thái kết quả (SUCCESS/FAILURE)
+        // Lọc theo trạng thái (success/failed)
         if (result) {
             filter.result = result;
         }
 
-        // Lọc theo khoảng thời gian
+        // Lọc theo khoảng thời gian: từ 00:00:00 đến 23:59:59.999
         if (fromDate || toDate) {
             filter.access_time = {};
+
             if (fromDate) {
-                filter.access_time.$gte = new Date(fromDate); // từ ngày
+                const from = new Date(fromDate);
+                from.setHours(0, 0, 0, 0);
+                filter.access_time.$gte = from;
             }
+
             if (toDate) {
-                // toDate đến cuối ngày (23:59:59.999)
-                const toDateObj = new Date(toDate);
-                toDateObj.setHours(23, 59, 59, 999);
-                filter.access_time.$lte = toDateObj; // đến ngày
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                filter.access_time.$lte = to;
             }
         }
 
@@ -39,6 +41,9 @@ exports.getListAccessLog = async (page, limit, order = "desc", department_id = n
             const userIds = users.map(u => u._id);
             filter.user_id = { $in: userIds };
         }
+
+        // Debug filter nếu cần
+        // console.log("FILTER:", filter);
 
         const accessLogs = await AccessLog.find(filter)
             .populate({
@@ -74,6 +79,8 @@ exports.getListAccessLog = async (page, limit, order = "desc", department_id = n
     }
 };
 
+
+
 exports.createAcessLog = async (fingerprint_id, mac_address, result) =>{
     try {
 
@@ -103,6 +110,10 @@ exports.createAcessLog = async (fingerprint_id, mac_address, result) =>{
         })
 
         await newLog.save();
+
+        if (global.io) {
+            global.io.emit("access-log-updated");
+        }
         return{
             success: true,
             message: "Có lượt truy cập mới",
@@ -112,3 +123,27 @@ exports.createAcessLog = async (fingerprint_id, mac_address, result) =>{
         return { success: false, message: `Failed to create accessLog: ${error}`};
     }
 }
+
+exports.deleteAccessLog = async (id) => {
+    try {
+        const log = await AccessLog.findById(id);
+        if (!log) {
+            return {
+                success: false,
+                message: "Không tìm thấy lịch sử truy cập"
+            };
+        }
+
+        await AccessLog.findByIdAndDelete(id);
+
+        return {
+            success: true,
+            message: "Xóa lịch sử truy cập thành công"
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: `Lỗi khi xóa lịch sử truy cập: ${error}`
+        };
+    }
+};

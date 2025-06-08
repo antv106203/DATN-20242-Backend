@@ -1,27 +1,23 @@
-const http = require('http');
-const app = require('./app');
+const appServer = require("./app"); // Đây là httpServer được export từ app.js
 require('dotenv').config();
 
 const normalizePort = val => {
   const port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    return val;
-  }
-  if (port >= 0) {
-    return port;
-  }
+  if (isNaN(port)) return val;
+  if (port >= 0) return port;
   return false;
 };
+
 const port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
 
 const errorHandler = error => {
   if (error.syscall !== 'listen') {
     throw error;
   }
-  const address = server.address();
-  const bind = typeof address === 'string' ? 'pipe ' + address : 'port: ' + port;
+  const bind = typeof appServer.address() === 'string'
+    ? 'pipe ' + appServer.address()
+    : 'port: ' + port;
+
   switch (error.code) {
     case 'EACCES':
       console.error(bind + ' requires elevated privileges.');
@@ -34,13 +30,12 @@ const errorHandler = error => {
   }
 };
 
-const server = http.createServer(app);
+appServer.on('error', errorHandler);
 
-server.on('error', errorHandler);
-server.on('listening', () => {
-  const address = server.address();
-  const bind = typeof address === 'string' ? 'pipe ' + address : 'port ' + port;
-  console.log('Listening on ' + bind);
+appServer.on('listening', () => {
+  const addr = appServer.address();
+  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${port}`;
+  console.log(`🚀 Listening on ${bind}`);
 });
 
-server.listen(port);
+appServer.listen(port);
