@@ -26,6 +26,10 @@ const AccessLogSchema = mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    department_id: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Department'  // 👈 phải trùng tên với model phòng ban
+    },
 }, {timestamps: true});
 
 AccessLogSchema.plugin(AutoIncrement, { inc_field: "log_id", start_seq: 1 })

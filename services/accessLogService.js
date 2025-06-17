@@ -54,6 +54,10 @@ exports.getListAccessLog = async (page, limit, order = "desc", department_id = n
                     select: "department_name department_code"
                 }
             })
+            .populate({
+                path: "department_id",
+                select: "department_name department_code"
+            })
             .skip(skip)
             .limit(limit)
             .sort(sortOptions);
@@ -81,12 +85,9 @@ exports.getListAccessLog = async (page, limit, order = "desc", department_id = n
 
 
 
-exports.createAcessLog = async (fingerprint_id, mac_address, result) =>{
+exports.createAcessLog = async (fingerprint_id, mac_address, result) => {
     try {
-
-        const device = await Device.findOne({
-            mac_address: mac_address
-        });
+        const device = await Device.findOne({ mac_address });
 
         if (!device) {
             return {
@@ -94,35 +95,41 @@ exports.createAcessLog = async (fingerprint_id, mac_address, result) =>{
                 message: "Không tìm thấy thiết bị"
             };
         }
+
         const device_id = device._id;
-        // Tìm fingerprint_id trong bảng Fingerprint
-        // Nếu không tìm thấy thì trả về lỗi        
+        const department_id = device.department_id;
+
         const fingerprint = await Fingerprint.findOne({
-            fingerprint_id: fingerprint_id,
-            device_id: device_id
-        })
+            fingerprint_id,
+            device_id
+        });
 
         const user_id = fingerprint ? fingerprint.user_id : null;
 
         const newLog = new AccessLog({
-            user_id: user_id,
-            result: result
-        })
+            user_id,
+            result,
+            department_id
+        });
 
         await newLog.save();
 
         if (global.io) {
             global.io.emit("access-log-updated");
         }
-        return{
+
+        return {
             success: true,
             message: "Có lượt truy cập mới",
             accessLog: newLog
-        }
+        };
     } catch (error) {
-        return { success: false, message: `Failed to create accessLog: ${error}`};
+        return {
+            success: false,
+            message: `Failed to create accessLog: ${error}`
+        };
     }
-}
+};
 
 exports.deleteAccessLog = async (id) => {
     try {
