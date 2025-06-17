@@ -192,7 +192,7 @@ exports.startExpiredCheck = () =>{
         } catch (error) {
             console.error('Lỗi trong quá trình kiểm tra dấu vân tay hết hạn:', error);
         }
-    }, 120000);
+    }, 60000);
 }
 
 exports.disableFingerprint = async (id_fingerprint) => {
