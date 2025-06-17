@@ -13,11 +13,6 @@ exports.createNewuser = async (newUser, avatar) =>{
             return { success: false, message: isvalid.message, data: null };
         }
 
-        // if (!full_name || !email || !department_id || !user_code) {
-        //     return { success: false, message: "Full name, email, and user_code are required", data: null };
-        // }
-
-
         const existingUser = await User.findOne({ user_code });
         if (existingUser) {
             if(existingUser.status === "DELETED"){
@@ -138,7 +133,7 @@ exports.getListUser = async(id_department = null, page = 1 , limit = 10, full_na
             .sort(sortOptions);
 
         const total = await User.countDocuments(filter);
-        const returned = users.length; // số bản ghi trả về ở trang hiện tại
+        const returned = users.length;
 
         return {
             success: true,
@@ -189,7 +184,7 @@ exports.UpdateInfomationOfUser = async(id, infoUser) =>{
 
 exports.getDetailUser = async (_id) => {
     try {
-        // Tìm user và populate phòng ban
+
         const user = await User.findById(_id).populate("department_id");
 
         if (!user) {
@@ -198,8 +193,7 @@ exports.getDetailUser = async (_id) => {
                 message: "User not found"
             };
         }
-
-        // Lấy danh sách fingerprint theo user_id
+        // Lấy danh sách vân tay của user
         const fingerprints = await Fingerprint.find({ user_id: _id }).populate("device_id");
 
         return {

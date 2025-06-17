@@ -14,13 +14,11 @@ exports.createFingerprint = async (fingerprint_id, fingerprint_name, expiry_at, 
             return { success: false, message: "Không được bỏ trống thông tin" };
         }
 
-        // Kiểm tra trùng fingerprint_id trong cùng device
         const existingFingerprint = await Fingerprint.findOne({ fingerprint_id, device_id });
         if (existingFingerprint) {
             return { success: false, message: "ID vân tay đã tồn tại trong thiết bị" };
         }
 
-        // Chuẩn hóa tên vân tay để kiểm tra trùng tên
         const normalizedName = normalizeFingerprintName(fingerprint_name);
 
         const existingByName = await Fingerprint.findOne({
@@ -63,7 +61,7 @@ exports.createFingerprint = async (fingerprint_id, fingerprint_name, expiry_at, 
 
 exports.getListFingerprint = async(page, limit, search,  order = "desc", status = null, user_id = null, device_id = null) =>{
     try {
-        // Chuyển đổi dữ liệu
+
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 10;
         const skip = (page - 1) * limit;
@@ -194,7 +192,7 @@ exports.startExpiredCheck = () =>{
         } catch (error) {
             console.error('Lỗi trong quá trình kiểm tra dấu vân tay hết hạn:', error);
         }
-    }, 120000); // Kiểm tra mỗi 2 phút
+    }, 120000);
 }
 
 exports.disableFingerprint = async (id_fingerprint) => {

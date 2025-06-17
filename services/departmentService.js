@@ -3,11 +3,7 @@ const mongoose = require("mongoose");
 
 exports.getListDepartment = async (search = "", order = "desc", floor = null) =>{
     try {
-        // Chuyển đổi dữ liệu
-        // page = parseInt(page) || 1;
-        // limit = parseInt(limit) || 10;
-        // const skip = (page - 1) * limit;
-
+        
         // Bộ lọc tìm kiếm theo tên hoặc mã
         let filter = {};
         if (search) {

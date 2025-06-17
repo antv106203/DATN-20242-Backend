@@ -22,7 +22,6 @@ exports.createNewDevice = async (device_name, mac_address, department_id) => {
             };
         }
 
-        // ❗ Kiểm tra phòng ban đã được kết nối thiết bị nào chưa
         const departmentUsed = await Device.findOne({ department_id });
         if (departmentUsed) {
             return {
@@ -32,7 +31,6 @@ exports.createNewDevice = async (device_name, mac_address, department_id) => {
             };
         }
 
-        // ✅ Tạo thiết bị mới
         const newDevice = new Device({ device_name, mac_address, department_id });
         await newDevice.save();
 
@@ -53,12 +51,11 @@ exports.createNewDevice = async (device_name, mac_address, department_id) => {
 
 exports.getListDevice = async(page = 1, limit = 10, search = "", order = "asc", department_id = null) =>{
     try {
-        // Chuyển đổi dữ liệu
+
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Bộ lọc tìm kiếm theo tên hoặc mã
         let filter = {};
         if (search) {
             filter = {
@@ -73,13 +70,12 @@ exports.getListDevice = async(page = 1, limit = 10, search = "", order = "asc", 
             filter.department_id = department_id
         }
         
-        // Xử lý sắp xếp theo `department_name`
         const sortOrder = order === "asc" ? 1 : -1;
         let sortOptions = { device_id: sortOrder };
 
         // Lấy danh sách phòng ban
         const devices = await Device.find(filter)
-            .populate("department_id") // Tham chiếu đến bảng `Department`
+            .populate("department_id")
             .skip(skip)
             .limit(limit)
             .sort(sortOptions);
@@ -100,8 +96,6 @@ exports.getListDevice = async(page = 1, limit = 10, search = "", order = "asc", 
             sort: { sortBy: "device_name", order }
         };
     } catch (error) {
-        // cmt
-        console.error("Error getting device list:", error);
         return { success: false, message: `Failed to fetch device list: ${error}`};
     }
 }

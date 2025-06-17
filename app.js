@@ -26,12 +26,11 @@ dbConnect();
 // Tạo socket server
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // Hoặc chỉ định domain
+    origin: '*',
     methods: ['GET', 'POST']
   }
 });
 
-// Gắn global để dùng trong service
 global.io = io;
 
 io.on('connection', (socket) => {
