@@ -33,16 +33,55 @@ exports.loginAccount = async(email, password) =>{
         const token = jwt.sign(
             {Email: account.email, role: account.role, _id: account._id},
             process.env.JWT_SECRET,
+            { expiresIn: "15m" }
+        );
+        const refresh_token = jwt.sign(
+            {Email: account.email, role: account.role, _id: account._id},
+            process.env.JWT_REFRESH_SECRET,
             { expiresIn: "7d" }
         );
 
         // Trả về user và token
-        return { success: true, message: "Đăng nhập thành công", data : {account: account, token: token}};
+        return { success: true, message: "Đăng nhập thành công", data : {account: account, token: token, refreshToken: refresh_token}};
     }   
     catch (error) {
         return { success: false, message: `Lỗi khi đăng nhập: ${error}` };
     }
 }
+
+exports.doRefreshToken = async(refresh_token) => {
+    try {
+        if(!refresh_token){
+            return { success: false, status_code: 401,  message: "Không có refresh token" };
+        }
+        const decoded = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET);
+        const account = await Account.findById(decoded._id);
+        if (!account) {
+            return { success: false, status_code: 401, message: "Tài khoản không tồn tại" };
+        }
+        if (account.status === "INACTIVE") {
+            return { success: false, status_code: 401,message: "Tài khoản đã bị khóa" };
+        }
+        const new_token = jwt.sign(
+            { Email: account.email, role: account.role, _id: account._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+        return {
+            success: true,
+            status_code: 200,
+            message: "Làm mới token thành công",
+            token: new_token
+        };
+    } catch (error) {
+        return {
+            success: false,
+            status_code: 401,
+            message: `Refresh token không hợp lệ hoặc đã hết hạn: ${error}`
+        };
+    }
+}
+
 
 const sendPasswordToEmail = async (email, password) => {
     const transporter = nodemailer.createTransport({

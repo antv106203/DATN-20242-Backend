@@ -4,6 +4,7 @@ const isAuth = require("../middlewares/authMiddleware")
 
 const router = express.Router();
 router.post('/login', accountController.login);
+router.post('/refresh_token', accountController.refreshToken);
 router.post("/register", isAuth(["ADMIN"]), accountController.register);
 router.post("/listAccount.json", isAuth(["ADMIN"]), accountController.getAllAccounts);
 router.post("/blockAccount.json", isAuth(["ADMIN"]), accountController.blockAccount);
