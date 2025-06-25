@@ -34,6 +34,10 @@ exports.createNewDevice = async (device_name, mac_address, department_id) => {
         const newDevice = new Device({ device_name, mac_address, department_id });
         await newDevice.save();
 
+        const payload = JSON.stringify({ mac_address });
+        mqttClient.publish("/status/request", payload);
+        console.log(`📡 Đã gửi yêu cầu xác nhận trạng thái tới /status/request: ${payload}`);
+
         return {
             success: true,
             message: "Thiết bị đã được tạo thành công",
@@ -164,6 +168,7 @@ exports.findAvailableDevices = async () => {
 
         // Lấy danh sách thiết bị đã tồn tại
         const existingDevices = await Device.find({}, "mac_address");
+        console.log(existingDevices)
         const existingMACs = new Set(
             existingDevices.map(d => d.mac_address.trim().toUpperCase())
         );
