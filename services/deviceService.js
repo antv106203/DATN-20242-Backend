@@ -277,7 +277,7 @@ exports.updateStatusDevice = async () => {
 
                 console.log(`Updated device ${mac_address} status to ${status}`);
 
-                // ✅ Emit socket event để FE biết mà reload danh sách thiết bị
+                // Emit socket event đề React reload danh sách thiết bị
                 if (global.io) {
                     global.io.emit("device-status-updated", {
                         mac_address,

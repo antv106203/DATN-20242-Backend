@@ -17,6 +17,12 @@ const http = require('http');
 const { Server } = require('socket.io')
 
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://datn-20242-frontend.onrender.com',
+  'https://antuhust.id.vn'
+];
+
 const app = express();
 const httpServer = http.createServer(app);
 
@@ -26,7 +32,14 @@ dbConnect();
 // Tạo socket server
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS (socket.io)'));
+      }
+    },
+    credentials: true,
     methods: ['GET', 'POST']
   }
 });
@@ -66,11 +79,6 @@ app.use(express.urlencoded({ extended: true }));
 
 
 deviceService.updateStatusDevice();
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://datn-20242-frontend.onrender.com',
-  'https://antuhust.id.vn'
-];
 
 app.use(cors({
   origin: function (origin, callback) {
