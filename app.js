@@ -41,7 +41,8 @@ const io = new Server(httpServer, {
     },
     credentials: true,
     methods: ['GET', 'POST']
-  }
+  },
+  transports: ['websocket']
 });
 
 global.io = io;
